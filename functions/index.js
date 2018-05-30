@@ -2,7 +2,7 @@ const functions = require("firebase-functions");
 const firebase = require("firebase");
 require("firebase/firestore");
 const cors = require("cors")();
-const { firebaseConfig } = require("../config");
+const { firebaseConfig } = require("./config");
 
 firebase.initializeApp(firebaseConfig);
 
@@ -28,6 +28,24 @@ exports.addUser = functions.https.onRequest((req, res) => {
         res.send({ err });
       });
   });
+});
+
+exports.getUserInfo = functions.https.onRequest((req, res) => {
+  const { uid } = req.query;
+  db
+    .collection("Users")
+    .doc(`${uid}`)
+    .get()
+    .then(doc => {
+      if (doc) {
+        res.send(doc);
+      } else {
+        //panic
+      }
+    })
+    .catch(err => {
+      console.log(`Error getting document for user ${uid}`, err);
+    });
 });
 
 // exports.sendQuestion = functions.firestore
