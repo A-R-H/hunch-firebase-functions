@@ -103,7 +103,7 @@ exports.getNextEvent = functions.https.onRequest((req, res) => {
             events.push(doc.data());
           });
           events.sort((a, b) => {
-            return a.event.date - b.event.date;
+            return a.date - b.date;
           });
           res.send(events[0]);
         }
