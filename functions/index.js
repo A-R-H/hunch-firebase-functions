@@ -89,7 +89,6 @@ exports.createCurrentEvent = functions.https.onRequest((req, res) => {
   });
 });
 
-
 exports.getNextEvent = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const eventsRef = db.collection("Current_Event");
@@ -118,47 +117,78 @@ exports.getNextEvent = functions.https.onRequest((req, res) => {
 
 exports.addEventToEvents = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
-      const newEvent = req.body.event
-      const eventName= req.body.eventName
-      const eventsRef = db.collection('Events').doc('AllEvents');
-      
-      const events = {}
-      events[`${eventName}`] = newEvent
+    const newEvent = req.body.event;
+    const eventName = req.body.eventName;
+    const eventsRef = db.collection("Events").doc("AllEvents");
 
-      return eventsRef.update(events).then(() => {
-          console.log('event successfully written!');
-          return eventsRef.get();
-      }).then(doc => {
-          console.log(doc.data());
-          const events = doc.data()
-          return res.send(events)
-      }).catch((err) => {
-          console.log('Error adding event to Events',err);
-          res.send(err);
-      }) 
-  })
-})
+    const events = {};
+    events[`${eventName}`] = newEvent;
+
+    return eventsRef
+      .update(events)
+      .then(() => {
+        console.log("event successfully written!");
+        return eventsRef.get();
+      })
+      .then(doc => {
+        console.log(doc.data());
+        const events = doc.data();
+        return res.send(events);
+      })
+      .catch(err => {
+        console.log("Error adding event to Events", err);
+        res.send(err);
+      });
+  });
+});
 
 exports.updateQuestion = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
-      // strip details from request body, event id, question object to update db object, question number to identify which question
-      console.log(req.body);
-      const eventID = req.body.eventID;
-      const questionObj = req.body.questionObj;
-      const questionNo = req.body.questionId
-      const eventQuestionRef = db.collection('Current_Event').doc(`${eventID}`);
-      return eventQuestionRef.get().then(doc => {
-          doc = doc.data();
-          console.log(doc);
-          doc.event[questionNo] = questionObj;
-          return doc;
-      }).then(doc => {
-          return eventQuestionRef.set(doc);
-      }).then(() => {
-          return res.send({message: `question${questionNo} successfully updated!`});
-      }).catch(err => {
-          console.log(`Error updating question${questionNo}`, err);
-          res.send(err);
-      }); 
-   }); 
+    // strip details from request body, event id, question object to update db object, question number to identify which question
+    console.log(req.body);
+    const eventID = req.body.eventID;
+    const questionObj = req.body.questionObj;
+    const questionNo = req.body.questionId;
+    const eventQuestionRef = db.collection("Current_Event").doc(`${eventID}`);
+    return eventQuestionRef
+      .get()
+      .then(doc => {
+        doc = doc.data();
+        console.log(doc);
+        doc.event[questionNo] = questionObj;
+        return doc;
+      })
+      .then(doc => {
+        return eventQuestionRef.set(doc);
+      })
+      .then(() => {
+        return res.send({
+          message: `question${questionNo} successfully updated!`
+        });
+      })
+      .catch(err => {
+        console.log(`Error updating question${questionNo}`, err);
+        res.send(err);
+      });
+  });
+});
+
+exports.changeUsersTickets = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    const { uid, ticketChange } = req.body;
+    const userRef = db.collection("Users").doc(`${uid}`);
+    const transaction = db
+      .runTransaction(t => {
+        return t.get(userRef).then(doc => {
+          const newTickets = Number(doc.data().tickets) + Number(ticketChange);
+          t.update(userRef, { tickets: newTickets });
+        });
+      })
+      .then(result => {
+        console.log("Transaction success", result);
+      })
+      .catch(err => {
+        console.log("Transaction failure:", err);
+      });
+  });
 });
