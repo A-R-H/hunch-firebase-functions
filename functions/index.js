@@ -3,6 +3,7 @@ const firebase = require("firebase");
 require("firebase/firestore");
 const cors = require("cors")();
 const { firebaseConfig } = require("./config");
+const { refineUserInfo } = require("./utils");
 
 firebase.initializeApp(firebaseConfig);
 
@@ -23,6 +24,7 @@ exports.addUser = functions.https.onRequest((req, res) => {
       .then(docRef => {
         //docRef is undefined??
         console.log("docRef", docRef);
+        console.log(`Added user ${uid} to database`);
         res.send({ docRef, err: null });
       })
       .catch(err => {
@@ -41,7 +43,10 @@ exports.getUserInfo = functions.https.onRequest((req, res) => {
       .then(doc => {
         if (doc) {
           console.log(`request for ${uid} data`);
-          res.send(doc._document.data);
+          const userInfo = refineUserInfo(
+            doc._document.data.internalValue.root
+          );
+          res.send(userInfo);
         } else {
           res.send({ err: "Invalid uid" });
         }
