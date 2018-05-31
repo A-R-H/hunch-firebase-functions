@@ -180,7 +180,7 @@ exports.changeUsersTickets = functions.https.onRequest((req, res) => {
     const transaction = db
       .runTransaction(t => {
         return t.get(userRef).then(doc => {
-          const newTickets = doc.data().tickets + ticketChange;
+          const newTickets = Number(doc.data().tickets) + Number(ticketChange);
           t.update(userRef, { tickets: newTickets });
         });
       })
