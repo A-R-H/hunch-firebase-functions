@@ -45,14 +45,11 @@ exports.getUserInfo = functions.https.onRequest((req, res) => {
       .doc(uid)
       .get()
       .then(doc => {
-        if (doc) {
-          console.log(`request for ${uid} data`);
-          const userInfo = refineUserInfo(
-            doc._document.data.internalValue.root
-          );
-          res.send(userInfo);
-        } else {
+        if (!doc.exists) {
           res.send({ err: "Invalid uid" });
+        } else {
+          console.log(`request for ${uid} data`);
+          res.send(doc.data());
         }
       })
       .catch(err => {
@@ -78,19 +75,35 @@ exports.getUserInfo = functions.https.onRequest((req, res) => {
 //     // perform desired operations ...
 //   });
 
-
 exports.createCurrentEvent = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
-      const event = req.body.currentEvent; // see how dan will sent event data
-  
-      return db.collection('Current_Event').add({event})
+    const event = req.body.currentEvent; // see how dan will sent event data
+
+    return db
+      .collection("Current_Event")
+      .add({ event })
       .then(docRef => {
-          return res.json({
-              result: `Event entry with ID: ${docRef.id} added.`,
-              eventID: docRef.id
-          });
-      });   
-  })
+        return res.json({
+          result: `Event entry with ID: ${docRef.id} added.`,
+          eventID: docRef.id
+        });
+      });
+  });
 });
 
-
+exports.getNextEvent = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    const eventsRef = db.collection("Current_Event");
+    const query = eventsRef
+      .get()
+      .then(snapshot => {
+        snapshot.forEach(doc => {
+          console.log(doc.id, "=>", doc.data());
+        });
+      })
+      .catch(err => {
+        console.log("Error getting documents", err);
+        res.send(err);
+      });
+  });
+});
