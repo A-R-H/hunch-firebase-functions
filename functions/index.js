@@ -17,7 +17,8 @@ exports.addUser = functions.https.onRequest((req, res) => {
       .set({
         username,
         email,
-        creation_time
+        creation_time,
+        tickets: 0
       })
       .then(docRef => {
         //docRef is undefined??
@@ -31,21 +32,25 @@ exports.addUser = functions.https.onRequest((req, res) => {
 });
 
 exports.getUserInfo = functions.https.onRequest((req, res) => {
-  const { uid } = req.query;
-  db
-    .collection("Users")
-    .doc(`${uid}`)
-    .get()
-    .then(doc => {
-      if (doc) {
-        res.send(doc);
-      } else {
-        //panic
-      }
-    })
-    .catch(err => {
-      console.log(`Error getting document for user ${uid}`, err);
-    });
+  cors(req, res, () => {
+    const { uid } = req.query;
+    db
+      .collection("Users")
+      .doc(uid)
+      .get()
+      .then(doc => {
+        if (doc) {
+          console.log(`request for ${uid} data`);
+          res.send(doc._document.data);
+        } else {
+          res.send({ err: "Invalid uid" });
+        }
+      })
+      .catch(err => {
+        console.log(`Error getting document for user ${uid}`, err);
+        res.send(err);
+      });
+  });
 });
 
 // exports.sendQuestion = functions.firestore
