@@ -10,7 +10,6 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 // const admin = require ('firebase-admin');
 // admin.initializeApp(functions.config().firebase);
-
 // const db = admin.firestore();
 
 exports.addUser = functions.https.onRequest((req, res) => {
@@ -92,5 +91,33 @@ exports.createCurrentEvent = functions.https.onRequest((req, res) => {
       });   
   })
 });
+
+exports.addEventToEvents = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+      console.log(req.body);
+      const eventsRef = db.collection('Events').doc('AllEvents');
+
+      const events = {}
+
+      const newEvent = req.body.event
+      const eventName= req.body.eventName
+
+      events[`${eventName}`] = newEvent
+
+      return eventsRef.update(events).then(() => {
+          console.log('event successfully written!');
+          return eventsRef.get();
+      }).then(doc => {
+          console.log(doc.data());
+          const events = doc.data()
+          return res.send(events)
+      }).catch((err) => {
+          console.log('Error adding event to Events',err);
+          res.send(err);
+      })
+        
+      
+  })
+})
 
 
