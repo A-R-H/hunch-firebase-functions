@@ -8,6 +8,10 @@ const { refineUserInfo } = require("./utils");
 firebase.initializeApp(firebaseConfig);
 
 const db = firebase.firestore();
+// const admin = require ('firebase-admin');
+// admin.initializeApp(functions.config().firebase);
+
+// const db = admin.firestore();
 
 exports.addUser = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
@@ -73,3 +77,20 @@ exports.getUserInfo = functions.https.onRequest((req, res) => {
 
 //     // perform desired operations ...
 //   });
+
+
+exports.createCurrentEvent = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+      const event = req.body.currentEvent; // see how dan will sent event data
+  
+      return db.collection('Current_Event').add({event})
+      .then(docRef => {
+          return res.json({
+              result: `Event entry with ID: ${docRef.id} added.`,
+              eventID: docRef.id
+          });
+      });   
+  })
+});
+
+
