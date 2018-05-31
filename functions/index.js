@@ -3,7 +3,6 @@ const firebase = require("firebase");
 require("firebase/firestore");
 const cors = require("cors")();
 const { firebaseConfig } = require("./config");
-const { refineUserInfo } = require("./utils");
 
 firebase.initializeApp(firebaseConfig);
 
@@ -97,9 +96,18 @@ exports.getNextEvent = functions.https.onRequest((req, res) => {
     const query = eventsRef
       .get()
       .then(snapshot => {
-        snapshot.forEach(doc => {
-          console.log(doc.id, "=>", doc.data());
-        });
+        const events = [];
+        if (snapshot.empty) {
+          res.send("No events");
+        } else {
+          snapshot.forEach(doc => {
+            events.push(doc.data());
+          });
+          events.sort((a, b) => {
+            return a.event.date - b.event.date;
+          });
+          res.send(events[0]);
+        }
       })
       .catch(err => {
         console.log("Error getting documents", err);
