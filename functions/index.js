@@ -75,11 +75,11 @@ exports.getUserInfo = functions.https.onRequest((req, res) => {
 
 exports.createCurrentEvent = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
-    const { event } = req.body.currentEvent; // see how dan will sent event data
-
+    // const event = req.body.currentEvent; // see how dan will sent event data
+    // console.log("req body current event", req.body.currentEvent);
     return db
       .collection("Current_Event")
-      .add(event)
+      .add(req.body.currentEvent)
       .then(docRef => {
         return res.json({
           result: `Event entry with ID: ${docRef.id} added.`,
