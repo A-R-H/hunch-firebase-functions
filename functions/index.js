@@ -97,7 +97,7 @@ exports.getNextEvent = functions.https.onRequest((req, res) => {
       .get()
       .then(snap => {
         snap.forEach(doc => {
-          res.send(doc.data());
+          res.send({ data: doc.data(), id: doc.id });
         });
       })
       .catch(err => {
@@ -203,6 +203,31 @@ exports.getAllEvents = functions.https.onRequest((req, res) => {
       .catch(err => {
         console.log("Error retrieving all event docs", err);
         res.send(err);
+      });
+  });
+});
+
+exports.usersAnswers = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    const { event_id, uid, question, answer } = req.body;
+    const answerRef = db.collection("Current_Event").doc(`${event_id}`);
+    const transaction = db
+      .runTransaction(t => {
+        return t.get(answerRef).then(doc => {
+          const currentAnswers = doc.data()[`answers_for_Q${question}`];
+          currentAnswers[uid] = answer;
+          return t.update(answerRef, {
+            [`answers_for_Q${question}`]: currentAnswers
+          });
+        });
+      })
+      .then(result => {
+        console.log("Transaction success", result);
+        res.send({ msg: "success" });
+      })
+      .catch(err => {
+        console.log("Transaction failure:", err);
+        res.send({ msg: "failure" });
       });
   });
 });
