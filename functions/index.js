@@ -109,7 +109,7 @@ exports.getNextEvent = functions.https.onRequest((req, res) => {
 
 exports.addEventToEvents = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
-    console.log(req.body);
+    console.log(req.body, 'req.body');
     const newEvent = req.body.event;
     const eventName = req.body.eventName;
     const eventsRef = db.collection("Events").doc("AllEvents");
@@ -117,7 +117,7 @@ exports.addEventToEvents = functions.https.onRequest((req, res) => {
     const events = {};
     events[`${eventName}`] = newEvent;
 
-    console.log(events);
+    console.log(events, 'event');
 
     return eventsRef
       .update(events)
