@@ -75,11 +75,11 @@ exports.getUserInfo = functions.https.onRequest((req, res) => {
 
 exports.createCurrentEvent = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
-    // const event = req.body.currentEvent; // see how dan will sent event data
-    // console.log("req body current event", req.body.currentEvent);
+    const { event } = req.body.currentEvent; // see how dan will sent event data
+
     return db
       .collection("Current_Event")
-      .add(req.body.currentEvent)
+      .add(event)
       .then(docRef => {
         return res.json({
           result: `Event entry with ID: ${docRef.id} added.`,
@@ -109,12 +109,15 @@ exports.getNextEvent = functions.https.onRequest((req, res) => {
 
 exports.addEventToEvents = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
+    console.log(req.body);
     const newEvent = req.body.event;
     const eventName = req.body.eventName;
     const eventsRef = db.collection("Events").doc("AllEvents");
 
     const events = {};
     events[`${eventName}`] = newEvent;
+
+    console.log(event);
 
     return eventsRef
       .update(events)
