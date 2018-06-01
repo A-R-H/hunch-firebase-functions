@@ -79,7 +79,7 @@ exports.createCurrentEvent = functions.https.onRequest((req, res) => {
 
     return db
       .collection("Current_Event")
-      .add({ event })
+      .add(event)
       .then(docRef => {
         return res.json({
           result: `Event entry with ID: ${docRef.id} added.`,
