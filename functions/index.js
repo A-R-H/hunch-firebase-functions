@@ -40,7 +40,7 @@ exports.getUserInfo = functions.https.onRequest((req, res) => {
     const { uid } = req.query;
     db
       .collection("Users")
-      .doc(uid)
+      .doc(`${uid}`)
       .get()
       .then(doc => {
         if (!doc.exists) {
@@ -92,24 +92,16 @@ exports.createCurrentEvent = functions.https.onRequest((req, res) => {
 exports.getNextEvent = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const eventsRef = db.collection("Current_Event");
-    const query = eventsRef
+    const nextEvent = eventsRef.orderBy("date").limit(1);
+    nextEvent
       .get()
-      .then(snapshot => {
-        const events = [];
-        if (snapshot.empty) {
-          res.send("No events");
-        } else {
-          snapshot.forEach(doc => {
-            events.push(doc.data());
-          });
-          events.sort((a, b) => {
-            return a.date - b.date;
-          });
-          res.send(events[0]);
-        }
+      .then(snap => {
+        snap.forEach(doc => {
+          res.send(doc.data());
+        });
       })
       .catch(err => {
-        console.log("Error getting documents", err);
+        console.log("error getting next event", err);
         res.send(err);
       });
   });
