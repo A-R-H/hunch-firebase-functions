@@ -207,7 +207,7 @@ exports.getAllEvents = functions.https.onRequest((req, res) => {
   });
 });
 
-exports.usersAnswers = functions.https.onRequest((req, res) => {
+exports.addUserAnswer = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { event_id, uid, question, answer } = req.body;
     const answerRef = db.collection("Current_Event").doc(`${event_id}`);
