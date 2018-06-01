@@ -75,7 +75,7 @@ exports.getUserInfo = functions.https.onRequest((req, res) => {
 
 exports.createCurrentEvent = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
-    const event = req.body.currentEvent; // see how dan will sent event data
+    const { event } = req.body.currentEvent; // see how dan will sent event data
 
     return db
       .collection("Current_Event")
@@ -185,17 +185,19 @@ exports.changeUsersTickets = functions.https.onRequest((req, res) => {
   });
 });
 
-
 exports.getAllEvents = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
-      const eventsRef = db.collection('Events').doc('AllEvents');
+    const eventsRef = db.collection("Events").doc("AllEvents");
 
-      return eventsRef.get().then(doc => {
-          const allEvents = doc.data();
-          return res.send(allEvents)
-      }).catch(err => {
-          console.log('Error retrieving all event docs', err);
-          res.send(err);
+    return eventsRef
+      .get()
+      .then(doc => {
+        const allEvents = doc.data();
+        return res.send(allEvents);
+      })
+      .catch(err => {
+        console.log("Error retrieving all event docs", err);
+        res.send(err);
       });
   });
 });
