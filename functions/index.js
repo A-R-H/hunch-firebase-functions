@@ -117,7 +117,7 @@ exports.addEventToEvents = functions.https.onRequest((req, res) => {
     const events = {};
     events[`${eventName}`] = newEvent;
 
-    console.log(event);
+    console.log(events);
 
     return eventsRef
       .update(events)
