@@ -92,7 +92,7 @@ exports.createCurrentEvent = functions.https.onRequest((req, res) => {
 exports.getNextEvent = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const eventsRef = db.collection("Current_Event");
-    const nextEvent = eventsRef.orderBy("date").limit(1);
+    const nextEvent = eventsRef.orderBy("date", "desc").limit(1);
     nextEvent
       .get()
       .then(snap => {
@@ -169,15 +169,17 @@ exports.changeUsersTickets = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { uid, ticketChange } = req.body;
     const userRef = db.collection("Users").doc(`${uid}`);
+    let newTickets;
     const transaction = db
       .runTransaction(t => {
         return t.get(userRef).then(doc => {
-          const newTickets = Number(doc.data().tickets) + Number(ticketChange);
-          t.update(userRef, { tickets: newTickets });
+          newTickets = Number(doc.data().tickets) + Number(ticketChange);
+          return t.update(userRef, { tickets: newTickets });
         });
       })
       .then(result => {
         console.log("Transaction success", result);
+        res.send({ tickets: newTickets });
       })
       .catch(err => {
         console.log("Transaction failure:", err);
