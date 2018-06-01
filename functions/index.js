@@ -192,3 +192,18 @@ exports.changeUsersTickets = functions.https.onRequest((req, res) => {
       });
   });
 });
+
+
+exports.getAllEvents = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+      const eventsRef = db.collection('Events').doc('AllEvents');
+
+      return eventsRef.get().then(doc => {
+          const allEvents = doc.data();
+          return res.send(allEvents)
+      }).catch(err => {
+          console.log('Error retrieving all event docs', err);
+          res.send(err);
+      });
+  });
+});
