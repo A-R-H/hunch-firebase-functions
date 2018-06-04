@@ -44,6 +44,7 @@ exports.getUserInfo = functions.https.onRequest((req, res) => {
       .get()
       .then(doc => {
         if (!doc.exists) {
+          console.log(`request for ${uid} data failed`);
           res.send({ err: "Invalid uid" });
         } else {
           console.log(`request for ${uid} data`);
