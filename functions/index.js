@@ -110,7 +110,7 @@ exports.getNextEvent = functions.https.onRequest((req, res) => {
 
 exports.addEventToEvents = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
-    console.log(req.body, 'req.body');
+    console.log(req.body, "req.body");
     const newEvent = req.body.event;
     const eventName = req.body.eventName;
     const eventsRef = db.collection("Events").doc("AllEvents");
@@ -118,7 +118,7 @@ exports.addEventToEvents = functions.https.onRequest((req, res) => {
     const events = {};
     events[`${eventName}`] = newEvent;
 
-    console.log(events, 'event');
+    console.log(events, "event");
 
     return eventsRef
       .update(events)
@@ -211,6 +211,7 @@ exports.getAllEvents = functions.https.onRequest((req, res) => {
 exports.addUserAnswer = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { event_id, uid, question, answer } = req.body;
+    console.log("body", req.body);
     const answerRef = db.collection("Current_Event").doc(`${event_id}`);
     const transaction = db
       .runTransaction(t => {
@@ -229,6 +230,44 @@ exports.addUserAnswer = functions.https.onRequest((req, res) => {
       .catch(err => {
         console.log("Transaction failure:", err);
         res.send({ msg: "failure" });
+      });
+  });
+});
+
+exports.fulfillQuestion = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    const { question, event_id, correct } = req.body;
+    console.log("req.body: ", req.body);
+    const answersRef = db.collection("Current_Event").doc(event_id);
+    return answersRef
+      .get()
+      .then(doc => {
+        const event = doc.data();
+        const answers = event[`answers_for_Q${question}`];
+        const answers_num = Number(event[question].answers_num);
+        const fulfilled = { correct, answers_num };
+        const refArr = ["a", "b", "c"];
+        for (let i = 0; i < answers_num; i++) {
+          fulfilled[`ans_${refArr[i]}`] = [];
+        }
+        for (let user in answers) {
+          fulfilled[answers[user]].push(user);
+        }
+        return db
+          .collection("Fulfilled_Questions")
+          .doc(question)
+          .set(fulfilled);
+      })
+      .then(docRef => {
+        console.log(`Fulfilled question ${question} for event ${event_id}`);
+        res.send({ err: null });
+      })
+      .catch(err => {
+        console.log(
+          `Error fulfilling question ${question} for event ${event_id}`,
+          err
+        );
+        res.send({ err });
       });
   });
 });
