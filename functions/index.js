@@ -295,3 +295,32 @@ exports.deleteEvent = functions.https.onRequest((req, res) => {
       });
   });
 });
+
+exports.questionsToCurrentQuestions = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+      console.log(req.body, 'req');
+      const eventID = req.body.eventID;
+      console.log(eventID, 'id');
+
+      const questionsRef= db.collection('Current_Event').doc(`${eventID}`);
+      return questionsRef.get().then(doc => {
+          console.log(doc);
+          const questionsCollection = doc.data();
+          const moveQuestions = () => {
+              for (let i = 1; i === 6; i++) {
+                  const currentQuestionRef = db.collection('Current_Questions').doc(`${i}`);
+                  return currentQuestionRef.set(questionsCollection[`${i}`])
+              }
+          }
+          return Promise.all([moveQuestions])
+          //res.send('Questions from Current_Event successfully moved');
+      }).then(res => {
+          console.log(res.data);
+          return res;
+      })
+      .catch(err => {
+          console.log('Error adding questions from Current_Event', err);
+          res.send(err);
+      })
+  })
+})
