@@ -327,50 +327,48 @@ exports.deleteEvent = functions.https.onRequest((req, res) => {
 });
 
 // 12.
-// exports.questionsToCurrentQuestions = functions.https.onRequest((req, res) => {
-//   return cors(req, res, () => {
-//     req.body = JSON.parse(req.body);
-//       const {eventID} = req.body;
-//       console.log('eventID:', eventID);
+// moves questions Current_Event to Current_Questions, need to fix Promise.all section, currently returning a array ie- [undefined, undefined etc]
+exports.questionsToCurrentQuestions = functions.https.onRequest((req, res) => {
+  return cors(req, res, () => {
+    req.body = JSON.parse(req.body);
+      const {eventID} = req.body;
+      console.log('eventID:', eventID);
 
-//       const questionsRef= db.collection('Current_Event').doc(eventID);
-//       return questionsRef
-//       .get()
-//       .then(doc => {
-//           console.log('DOC:',doc.data());
+      const questionsRef= db.collection('Current_Event').doc(eventID);
+      return questionsRef
+      .get()
+      .then(doc => {
+          console.log('DOC:',doc.data());
           
-//           const moveQuestions = () => {
-//             const questionsCollection = doc.data();
-//             const questionArr = [1, 2, 3, 4, 5, 6];
-//             console.log(questionArr);
-//             console.log(questionsCollection);
-//              return questionArr.map(num => {
-//                  return db.collection('Current_Questions').doc(num).set(questionsCollection[num])
-//              })
-//           }
-//           return Promise.all(moveQuestions())
-//           //res.send('Questions from Current_Event successfully moved');
-//       }).then(res => {
-//           console.log(res.data);
-//           return res;
-//       })
-//       .catch(err => {
-//           console.log('Error adding questions from Current_Event', err);
-//           res.send(err);
-//       });
-//   });
-// });
+          const moveQuestions = () => {
+            const questionsCollection = doc.data();
+            const questionArr = [1, 2, 3, 4, 5, 6];
+            console.log(questionArr);
+            console.log(questionsCollection);
+             return questionArr.map(num => {
+                 return db.collection('Current_Questions').doc(`${num}`).set(questionsCollection[`${num}`])
+             })
+          }
+          return Promise.all(moveQuestions())
+      }).catch(err => {
+          console.log('Error adding questions from Current_Event', err);
+          res.send(err);
+      });
+  });
+});
 
 exports.getCurrentEventById = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
+    //req.body = JSON.parse(req.body);
     console.log(req.body);
     const {eventID} = req.body
 
     const eventsRef = db.collection('Current_Event').doc(eventID);
 
     return eventsRef.get().then(doc => {
-      console.log(doc);
-      res.send(doc)
+      console.log(doc.data());
+      const event = doc.data()
+      return res.send(event)
     }).catch(err => {
       console.log('Error retrieving current event', err);
       res.send(err)
