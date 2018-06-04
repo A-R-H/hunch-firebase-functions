@@ -242,9 +242,7 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
     return answersRef
       .get()
       .then(doc => {
-        console.log("exists", doc.exists);
         const event = doc.data();
-        console.log("event", event);
         const answers = event[`answers_for_Q${question}`];
         const answers_num = Number(event[question].answers_num);
         const fulfilled = { correct, answers_num };
@@ -261,11 +259,14 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
           .set(fulfilled);
       })
       .then(docRef => {
-        console.log(`Fulfilled question ${question}`);
+        console.log(`Fulfilled question ${question} for event ${event_id}`);
         res.send({ err: null });
       })
       .catch(err => {
-        console.log("Error fulfilling question", err);
+        console.log(
+          `Error fulfilling question ${question} for event ${event_id}`,
+          err
+        );
         res.send({ err });
       });
   });
