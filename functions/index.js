@@ -109,7 +109,7 @@ exports.getNextEvent = functions.https.onRequest((req, res) => {
 });
 
 exports.addEventToEvents = functions.https.onRequest((req, res) => {
-  return cors(req, res, () => {
+  cors(req, res, () => {
     console.log(req.body, 'req.body');
     const newEvent = req.body.event;
     const eventName = req.body.eventName;
