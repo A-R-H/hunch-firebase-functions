@@ -246,9 +246,10 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
         const event = doc.data();
         console.log("event", event);
         const answers = event[`answers_for_Q${question}`];
-        const fulfilled = { correct };
+        const answers_num = Number(event[question].answers_num);
+        const fulfilled = { correct, answers_num };
         const refArr = ["a", "b", "c"];
-        for (let i = 0; i < Number(event.questions); i++) {
+        for (let i = 0; i < answers_num; i++) {
           fulfilled[`ans_${refArr[i]}`] = [];
         }
         for (let user in answers) {
