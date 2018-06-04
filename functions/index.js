@@ -271,3 +271,27 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
       });
   });
 });
+
+exports.deleteEvent = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+      console.log(req.body);
+      const FieldValue = require('firebase-admin').firestore.FieldValue;
+      const eventNo = req.body.eventNo
+      const eventsRef = db.collection('Events').doc('AllEvents');
+
+      return eventsRef.get()
+      .then(doc => {
+          const eventsObj = doc.data();
+          delete eventsObj[`${eventNo}`];
+          return eventsObj;
+      }).then(doc => {
+          return eventsRef.set(doc);
+      }).then(doc => {
+          console.log(doc);
+          return res.send(`Event: ${eventNo} successfully deleted`);
+      }).catch(err => {
+          console.log(`Error deleting ${eventNo}`, err);
+          res.send(err)
+      });
+  });
+});
