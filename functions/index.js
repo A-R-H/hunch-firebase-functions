@@ -11,6 +11,25 @@ const db = firebase.firestore();
 // admin.initializeApp(functions.config().firebase);
 // const db = admin.firestore();
 
+/*
+FUNCTIONS
+1. addUser
+2.getUserInfo
+3. createCurrentEvent
+4. getNextEvent
+5. addEventToEvents
+6. updateQuestion
+7. changeUsersTickets
+8. getAllEvents
+9. addUserAnswer
+10. fulfillQuestion
+11. deleteEvent
+12. questionsToCurrentQuestions
+13. CurrentEventById
+
+*/
+
+// 1.
 exports.addUser = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { uid, username, email, creation_time } = req.body;
@@ -35,6 +54,7 @@ exports.addUser = functions.https.onRequest((req, res) => {
   });
 });
 
+// 2.
 exports.getUserInfo = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { uid } = req.query;
@@ -74,9 +94,11 @@ exports.getUserInfo = functions.https.onRequest((req, res) => {
 //     // perform desired operations ...
 //   });
 
+// 3.
 exports.createCurrentEvent = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
-    const { currentEvent } = req.body.currentEvent; // see how dan will sent event data
+    console.log(req.body);
+    const { currentEvent } = req.body; // see how dan will sent event data
 
     return db
       .collection("Current_Event")
@@ -90,10 +112,11 @@ exports.createCurrentEvent = functions.https.onRequest((req, res) => {
   });
 });
 
+// 4.
 exports.getNextEvent = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const eventsRef = db.collection("Current_Event");
-    const nextEvent = eventsRef.orderBy("date", "desc").limit(1);
+    const nextEvent = eventsRef.orderBy("date").limit(1);
     nextEvent
       .get()
       .then(snap => {
@@ -108,6 +131,7 @@ exports.getNextEvent = functions.https.onRequest((req, res) => {
   });
 });
 
+// 5.
 exports.addEventToEvents = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     console.log(req.body, "req.body");
@@ -138,6 +162,7 @@ exports.addEventToEvents = functions.https.onRequest((req, res) => {
   });
 });
 
+// 6.
 exports.updateQuestion = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     // strip details from request body, event id, question object to update db object, question number to identify which question
@@ -169,6 +194,7 @@ exports.updateQuestion = functions.https.onRequest((req, res) => {
   });
 });
 
+// 7.
 exports.changeUsersTickets = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { uid, ticketChange } = req.body;
@@ -191,6 +217,7 @@ exports.changeUsersTickets = functions.https.onRequest((req, res) => {
   });
 });
 
+// 8.
 exports.getAllEvents = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const eventsRef = db.collection("Events").doc("AllEvents");
@@ -208,6 +235,7 @@ exports.getAllEvents = functions.https.onRequest((req, res) => {
   });
 });
 
+// 9.
 exports.addUserAnswer = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { event_id, uid, question, answer } = req.body;
@@ -234,6 +262,7 @@ exports.addUserAnswer = functions.https.onRequest((req, res) => {
   });
 });
 
+// 10.
 exports.fulfillQuestion = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { question, event_id, correct } = req.body;
@@ -272,10 +301,11 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
   });
 });
 
+// 11.
 exports.deleteEvent = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
-      console.log(req.body);
-      const FieldValue = require('firebase-admin').firestore.FieldValue;
+    //req.body = JSON.parse(req.body);
+    console.log(req.body);
       const eventNo = req.body.eventNo
       const eventsRef = db.collection('Events').doc('AllEvents');
 
@@ -293,5 +323,63 @@ exports.deleteEvent = functions.https.onRequest((req, res) => {
           console.log(`Error deleting ${eventNo}`, err);
           res.send(err)
       });
+  });
+});
+
+// 12.
+// moves questions Current_Event to Current_Questions, need to fix Promise.all section, currently returning a array ie- [undefined, undefined etc]
+exports.questionsToCurrentQuestions = functions.https.onRequest((req, res) => {
+  return cors(req, res, () => {
+    req.body = JSON.parse(req.body);
+      const {eventID} = req.body;
+      console.log('eventID:', eventID);
+
+      const questionsRef= db.collection('Current_Event').doc(eventID);
+      return questionsRef
+      .get()
+      .then(doc => {
+        const questionsCollection = doc.data();
+        const questionArr = [1, 2, 3, 4, 5, 6];
+
+        // console.log('DOC:',doc.data());
+        // console.log('arr',questionArr);
+        // console.log('collection',questionsCollection);
+
+        const moveQuestion = (num) => {
+          return  db.collection('Current_Questions')
+                    .doc(`${num}`)
+                    .set(questionsCollection[`${num}`])        
+          }
+
+        return Promise.all(questionArr.map(num => {
+            return moveQuestion(num);
+            }));
+      }).then(questions => {
+        //console.log('questions', questions);
+        return res.send('Questions successfully moved to Current_Questions')
+      }).catch(err => {
+          console.log('Error adding questions from Current_Event', err);
+          res.send(err);
+      });
+  });
+});
+
+// 13.
+exports.CurrentEventById = functions.https.onRequest((req, res) => {
+  return cors(req, res, () => {
+    //req.body = JSON.parse(req.body);
+    console.log(req.body);
+    const {eventID} = req.body
+
+    const eventsRef = db.collection('Current_Event').doc(eventID);
+
+    return eventsRef.get().then(doc => {
+      console.log(doc.data());
+      const event = doc.data()
+      return res.send(event)
+    }).catch(err => {
+      console.log('Error retrieving current event', err);
+      res.send(err)
+    });
   });
 });
