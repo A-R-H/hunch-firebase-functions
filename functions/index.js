@@ -25,7 +25,7 @@ FUNCTIONS
 10. fulfillQuestion
 11. deleteEvent
 12. questionsToCurrentQuestions
-13. getCurrentEventById
+13. CurrentEventById
 
 */
 
@@ -338,18 +338,25 @@ exports.questionsToCurrentQuestions = functions.https.onRequest((req, res) => {
       return questionsRef
       .get()
       .then(doc => {
-          console.log('DOC:',doc.data());
-          
-          const moveQuestions = () => {
-            const questionsCollection = doc.data();
-            const questionArr = [1, 2, 3, 4, 5, 6];
-            console.log(questionArr);
-            console.log(questionsCollection);
-             return questionArr.map(num => {
-                 return db.collection('Current_Questions').doc(`${num}`).set(questionsCollection[`${num}`])
-             })
+        const questionsCollection = doc.data();
+        const questionArr = [1, 2, 3, 4, 5, 6];
+
+        // console.log('DOC:',doc.data());
+        // console.log('arr',questionArr);
+        // console.log('collection',questionsCollection);
+
+        const moveQuestion = (num) => {
+          return  db.collection('Current_Questions')
+                    .doc(`${num}`)
+                    .set(questionsCollection[`${num}`])        
           }
-          return Promise.all(moveQuestions())
+
+        return Promise.all(questionArr.map(num => {
+            return moveQuestion(num);
+            }));
+      }).then(questions => {
+        //console.log('questions', questions);
+        return res.send('Questions successfully moved to Current_Questions')
       }).catch(err => {
           console.log('Error adding questions from Current_Event', err);
           res.send(err);
@@ -357,7 +364,8 @@ exports.questionsToCurrentQuestions = functions.https.onRequest((req, res) => {
   });
 });
 
-exports.getCurrentEventById = functions.https.onRequest((req, res) => {
+// 13.
+exports.CurrentEventById = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
     //req.body = JSON.parse(req.body);
     console.log(req.body);
