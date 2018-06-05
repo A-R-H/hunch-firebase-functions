@@ -26,6 +26,7 @@ FUNCTIONS
 11. deleteEvent
 12. questionsToCurrentQuestions
 13. CurrentEventById
+14. changeLiveStatus
 
 */
 
@@ -306,22 +307,26 @@ exports.deleteEvent = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     //req.body = JSON.parse(req.body);
     console.log(req.body);
-      const eventNo = req.body.eventNo
-      const eventsRef = db.collection('Events').doc('AllEvents');
+    const eventNo = req.body.eventNo;
+    const eventsRef = db.collection("Events").doc("AllEvents");
 
-      return eventsRef.get()
+    return eventsRef
+      .get()
       .then(doc => {
-          const eventsObj = doc.data();
-          delete eventsObj[`${eventNo}`];
-          return eventsObj;
-      }).then(doc => {
-          return eventsRef.set(doc);
-      }).then(doc => {
-          console.log(doc);
-          return res.send(`Event: ${eventNo} successfully deleted`);
-      }).catch(err => {
-          console.log(`Error deleting ${eventNo}`, err);
-          res.send(err)
+        const eventsObj = doc.data();
+        delete eventsObj[`${eventNo}`];
+        return eventsObj;
+      })
+      .then(doc => {
+        return eventsRef.set(doc);
+      })
+      .then(doc => {
+        console.log(doc);
+        return res.send(`Event: ${eventNo} successfully deleted`);
+      })
+      .catch(err => {
+        console.log(`Error deleting ${eventNo}`, err);
+        res.send(err);
       });
   });
 });
@@ -330,14 +335,14 @@ exports.deleteEvent = functions.https.onRequest((req, res) => {
 // moves questions Current_Event to Current_Questions, need to fix Promise.all section, currently returning a array ie- [undefined, undefined etc]
 exports.questionsToCurrentQuestions = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
-    console.log('BEFORE',req.body);
+    console.log("BEFORE", req.body);
     //req.body = JSON.parse(req.body);
-    console.log('after',req.body);
-      const {eventID} = req.body;
-      console.log('eventID:', eventID);
+    console.log("after", req.body);
+    const { eventID } = req.body;
+    console.log("eventID:", eventID);
 
-      const questionsRef= db.collection('Current_Event').doc(eventID);
-      return questionsRef
+    const questionsRef = db.collection("Current_Event").doc(eventID);
+    return questionsRef
       .get()
       .then(doc => {
         const questionsCollection = doc.data();
@@ -347,21 +352,26 @@ exports.questionsToCurrentQuestions = functions.https.onRequest((req, res) => {
         // console.log('arr',questionArr);
         // console.log('collection',questionsCollection);
 
-        const moveQuestion = (num) => {
-          return  db.collection('Current_Questions')
-                    .doc(`${num}`)
-                    .set(questionsCollection[`${num}`])        
-          }
+        const moveQuestion = num => {
+          return db
+            .collection("Current_Questions")
+            .doc(`${num}`)
+            .set(questionsCollection[`${num}`]);
+        };
 
-        return Promise.all(questionArr.map(num => {
+        return Promise.all(
+          questionArr.map(num => {
             return moveQuestion(num);
-            }));
-      }).then(questions => {
+          })
+        );
+      })
+      .then(questions => {
         //console.log('questions', questions);
-        return res.send('Questions successfully moved to Current_Questions')
-      }).catch(err => {
-          console.log('Error adding questions from Current_Event', err);
-          res.send(err);
+        return res.send("Questions successfully moved to Current_Questions");
+      })
+      .catch(err => {
+        console.log("Error adding questions from Current_Event", err);
+        res.send(err);
       });
   });
 });
@@ -371,18 +381,21 @@ exports.CurrentEventById = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
     //req.body = JSON.parse(req.body);
     console.log(req.body);
-    const {eventID} = req.body
+    const { eventID } = req.body;
 
-    const eventsRef = db.collection('Current_Event').doc(eventID);
+    const eventsRef = db.collection("Current_Event").doc(eventID);
 
-    return eventsRef.get().then(doc => {
-      console.log(doc.data());
-      const event = doc.data()
-      return res.send(event)
-    }).catch(err => {
-      console.log('Error retrieving current event', err);
-      res.send(err)
-    });
+    return eventsRef
+      .get()
+      .then(doc => {
+        console.log(doc.data());
+        const event = doc.data();
+        return res.send(event);
+      })
+      .catch(err => {
+        console.log("Error retrieving current event", err);
+        res.send(err);
+      });
   });
 });
 
@@ -390,34 +403,39 @@ exports.CurrentEventById = functions.https.onRequest((req, res) => {
 exports.changeLiveStatus = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
     //req.body = JSON.parse(req.body);
-    console.log('REQ',req.body);
-    const {questionNo} = req.body;
-    console.log('QUESTION NO',questionNo);
+    console.log("REQ", req.body);
+    const { questionNo } = req.body;
+    console.log("QUESTION NO", questionNo);
 
-    const questionRef = db.collection('Current_Questions').doc(`${questionNo}`);
+    const questionRef = db.collection("Current_Questions").doc(`${questionNo}`);
 
     return questionRef
-          .get()
-          .then(doc => {
-            console.log('STATUS',question.data());
-            const question = doc.data();
-              question['live'] = !question['live'];
-              return question;
-         }).then(question => {
-           console.log('SET', question);
-             return questionRef
-               .set(question)
-         }).then(doc => {
-              return questionRef.get();
-         }).then(doc => {
-           const question = doc.data()
-           //console.log('SEND STATUS', question);
-            return question.live;
-         }).then(status => {
-               return res.send(`Question's live status is ${status}`);
-         }).catch(err => {
-              console.log('Error changing live status');
-              res.send(err);
-         });
+      .get()
+      .then(doc => {
+        console.log("here");
+        console.log("STATUS", doc.data());
+        const question = doc.data();
+        question["live"] = !question["live"];
+        return question;
+      })
+      .then(question => {
+        console.log("SET", question);
+        return questionRef.set(question);
+      })
+      .then(doc => {
+        return questionRef.get();
+      })
+      .then(doc => {
+        const question = doc.data();
+        //console.log('SEND STATUS', question);
+        return question.live;
+      })
+      .then(status => {
+        return res.send(`Question's live status is ${status}`);
+      })
+      .catch(err => {
+        console.log("Error changing live status");
+        res.send(err);
+      });
   });
 });
