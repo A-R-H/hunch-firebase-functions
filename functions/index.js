@@ -174,10 +174,10 @@ exports.updateQuestion = functions.https.onRequest((req, res) => {
     return eventQuestionRef
       .get()
       .then(doc => {
-        doc = doc.data();
+        const question = doc.data();
         console.log(doc);
-        doc[`${questionNo}`] = questionObj;
-        return doc;
+        question[`${questionNo}`] = questionObj;
+        return question;
       })
       .then(doc => {
         return eventQuestionRef.set(doc);
@@ -398,9 +398,9 @@ exports.changeLiveStatus = functions.https.onRequest((req, res) => {
 
     return questionRef
           .get()
-          .then(question => {
+          .then(doc => {
             console.log('STATUS',question.data());
-            question = question.data();
+            const question = doc.data();
               question['live'] = !question['live'];
               return question;
          }).then(question => {
@@ -409,8 +409,8 @@ exports.changeLiveStatus = functions.https.onRequest((req, res) => {
                .set(question)
          }).then(doc => {
               return questionRef.get();
-         }).then(question => {
-           question = question.data()
+         }).then(doc => {
+           const question = doc.data()
            //console.log('SEND STATUS', question);
             return question.live;
          }).then(status => {
