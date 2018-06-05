@@ -176,7 +176,7 @@ exports.updateQuestion = functions.https.onRequest((req, res) => {
       .then(doc => {
         doc = doc.data();
         console.log(doc);
-        doc[questionNo] = questionObj;
+        doc[`${questionNo}`] = questionObj;
         return doc;
       })
       .then(doc => {
@@ -330,7 +330,9 @@ exports.deleteEvent = functions.https.onRequest((req, res) => {
 // moves questions Current_Event to Current_Questions, need to fix Promise.all section, currently returning a array ie- [undefined, undefined etc]
 exports.questionsToCurrentQuestions = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
-    req.body = JSON.parse(req.body);
+    console.log('BEFORE',req.body);
+    //req.body = JSON.parse(req.body);
+    console.log('after',req.body);
       const {eventID} = req.body;
       console.log('eventID:', eventID);
 
@@ -387,7 +389,7 @@ exports.CurrentEventById = functions.https.onRequest((req, res) => {
 // 14.
 exports.changeLiveStatus = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
-    req.body = JSON.parse(req.body);
+    //req.body = JSON.parse(req.body);
     console.log('REQ',req.body);
     const {questionNo} = req.body;
     console.log('QUESTION NO',questionNo);
@@ -409,7 +411,7 @@ exports.changeLiveStatus = functions.https.onRequest((req, res) => {
               return questionRef.get();
          }).then(question => {
            question = question.data()
-           console.log('SEND STATUS', question);
+           //console.log('SEND STATUS', question);
             return question.live;
          }).then(status => {
                return res.send(`Question's live status is ${status}`);
