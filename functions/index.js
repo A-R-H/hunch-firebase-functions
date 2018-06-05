@@ -267,7 +267,7 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { question, event_id, correct } = req.body;
     console.log("req.body: ", req.body);
-    const answersRef = db.collection("Current_Event").doc(event_id);
+    const answersRef = db.collection("Current_Event").doc(`${event_id}`);
     return answersRef
       .get()
       .then(doc => {
