@@ -176,7 +176,7 @@ exports.updateQuestion = functions.https.onRequest((req, res) => {
       .then(doc => {
         doc = doc.data();
         console.log(doc);
-        doc.event[questionNo] = questionObj;
+        doc[questionNo] = questionObj;
         return doc;
       })
       .then(doc => {
@@ -381,5 +381,41 @@ exports.CurrentEventById = functions.https.onRequest((req, res) => {
       console.log('Error retrieving current event', err);
       res.send(err)
     });
+  });
+});
+
+// 14.
+exports.changeLiveStatus = functions.https.onRequest((req, res) => {
+  return cors(req, res, () => {
+    req.body = JSON.parse(req.body);
+    console.log('REQ',req.body);
+    const {questionNo} = req.body;
+    console.log('QUESTION NO',questionNo);
+
+    const questionRef = db.collection('Current_Questions').doc(`${questionNo}`);
+
+    return questionRef
+          .get()
+          .then(question => {
+            console.log('STATUS',question.data());
+            question = question.data();
+              question['live'] = !question['live'];
+              return question;
+         }).then(question => {
+           console.log('SET', question);
+             return questionRef
+               .set(question)
+         }).then(doc => {
+              return questionRef.get();
+         }).then(question => {
+           question = question.data()
+           console.log('SEND STATUS', question);
+            return question.live;
+         }).then(status => {
+               return res.send(`Question's live status is ${status}`);
+         }).catch(err => {
+              console.log('Error changing live status');
+              res.send(err);
+         });
   });
 });
