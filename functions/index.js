@@ -342,7 +342,7 @@ exports.deleteEvent = functions.https.onRequest((req, res) => {
 });
 
 // 12.
-// moves questions Current_Event to Current_Questions, need to fix Promise.all section, currently returning a array ie- [undefined, undefined etc]
+// moves questions Current_Event to Current_Questions
 exports.questionsToCurrentQuestions = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
     console.log("BEFORE", req.body);
