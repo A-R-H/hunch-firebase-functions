@@ -27,6 +27,7 @@ FUNCTIONS
 12. questionsToCurrentQuestions
 13. CurrentEventById
 14. changeLiveStatus
+15. getWinnersTally
 
 */
 
@@ -76,22 +77,6 @@ exports.getUserInfo = functions.https.onRequest((req, res) => {
       });
   });
 });
-
-// exports.sendQuestion = functions.firestore
-//   .document("Current_Event/{event_id}")
-//   .onUpdate((change, context) => {
-//     // Get an object representing the document
-//     // e.g. {'name': 'Marie', 'age': 66}
-//     const newValue = change.after.data();
-
-//     // ...or the previous value before this update
-//     const previousValue = change.before.data();
-
-//     // access a particular field as you would any JS property
-//     const name = newValue.name;
-
-//     // perform desired operations ...
-//   });
 
 // 3.
 exports.createCurrentEvent = functions.https.onRequest((req, res) => {
@@ -266,7 +251,8 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { question, event_id, correct } = req.body;
     console.log("req.body: ", req.body);
-    const currentEventRef = db.collection("Current_Event").doc(`${event_id}`);
+    const currentEventRef = db.collection("Current_Event").doc(event_id);
+    const tallyRef = db.collection("Event_Winners").doc(event_id);
     const fulfilled = { correct };
     return currentEventRef
       .get()
@@ -290,18 +276,34 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
             .doc(question)
             .set(fulfilled),
           db.collection("Fulfilled_Questions").get(),
-          questions
+          questions,
+          answers,
+          tallyRef.get()
         ]);
       })
-      .then(([docRef, alreadyFulfilled, questions]) => {
+      .then(([docRef, alreadyFulfilled, questions, answers, oldTally]) => {
         console.log(`Fulfilled question ${question} for event ${event_id}`);
-        const eventFinished = questions === alreadyFulfilled.docs.length;
+        const howManyFulfilled = alreadyFulfilled.docs.length;
+        const eventFinished = questions === howManyFulfilled;
+        const tallyData = oldTally.data();
+        for (let user in answers) {
+          if (answers[user] === correct) {
+            tallyData[user] = tallyData[user] ? tallyData[user] + 1 : 1;
+          }
+        }
+        return Promise.all([
+          tallyRef.set(tallyData),
+          eventFinished,
+          howManyFulfilled
+        ]);
+      })
+      .then(([docRef, eventFinished, howManyFulfilled]) => {
         if (eventFinished) {
           currentEventRef.set({ complete: true }, { merge: true });
         }
         res.send({
           results: { [question]: fulfilled },
-          howManyFulfilled: alreadyFulfilled.docs.length,
+          howManyFulfilled,
           eventFinished
         });
       })
@@ -448,6 +450,28 @@ exports.changeLiveStatus = functions.https.onRequest((req, res) => {
       })
       .catch(err => {
         console.log("Error changing live status");
+        res.send(err);
+      });
+  });
+});
+
+exports.getWinnersTally = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    const { event } = req.query;
+    db.collection("Event_Winners")
+      .doc(event)
+      .get()
+      .then(doc => {
+        if (!doc.exists) {
+          console.log(`request for ${event} data failed`);
+          res.send({ err: "Invalid event id" });
+        } else {
+          console.log(`request for ${event} event data`);
+          res.send(doc.data());
+        }
+      })
+      .catch(err => {
+        console.log(`Error getting document for event ${event}`, err);
         res.send(err);
       });
   });
