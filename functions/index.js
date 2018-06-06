@@ -34,8 +34,7 @@ FUNCTIONS
 exports.addUser = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { uid, username, email, creation_time } = req.body;
-    db
-      .collection("Users")
+    db.collection("Users")
       .doc(`${uid}`)
       .set({
         username,
@@ -59,8 +58,7 @@ exports.addUser = functions.https.onRequest((req, res) => {
 exports.getUserInfo = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { uid } = req.query;
-    db
-      .collection("Users")
+    db.collection("Users")
       .doc(`${uid}`)
       .get()
       .then(doc => {
@@ -269,13 +267,14 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
     const { question, event_id, correct } = req.body;
     console.log("req.body: ", req.body);
     const answersRef = db.collection("Current_Event").doc(`${event_id}`);
+    const fulfilled = { correct };
     return answersRef
       .get()
       .then(doc => {
         const event = doc.data();
         const answers = event[`answers_for_Q${question}`];
         const answers_num = Number(event[question].answers_num);
-        const fulfilled = { correct, answers_num };
+        fulfilled.answers_num = answers_num;
         const refArr = ["a", "b", "c"];
         for (let i = 0; i < answers_num; i++) {
           fulfilled[`ans_${refArr[i]}`] = [];
@@ -290,7 +289,7 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
       })
       .then(docRef => {
         console.log(`Fulfilled question ${question} for event ${event_id}`);
-        res.send({ err: null });
+        res.send({ [question]: fulfilled });
       })
       .catch(err => {
         console.log(
@@ -427,7 +426,7 @@ exports.changeLiveStatus = functions.https.onRequest((req, res) => {
       })
       .then(doc => {
         const question = doc.data();
-        console.log('SEND STATUS', question);
+        console.log("SEND STATUS", question);
         return question.live;
       })
       .then(status => {
