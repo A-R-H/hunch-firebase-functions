@@ -427,7 +427,7 @@ exports.changeLiveStatus = functions.https.onRequest((req, res) => {
       })
       .then(doc => {
         const question = doc.data();
-        //console.log('SEND STATUS', question);
+        console.log('SEND STATUS', question);
         return question.live;
       })
       .then(status => {
