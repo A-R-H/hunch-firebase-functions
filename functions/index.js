@@ -266,9 +266,9 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { question, event_id, correct } = req.body;
     console.log("req.body: ", req.body);
-    const answersRef = db.collection("Current_Event").doc(`${event_id}`);
+    const currentEventRef = db.collection("Current_Event").doc(`${event_id}`);
     const fulfilled = { correct };
-    return answersRef
+    return currentEventRef
       .get()
       .then(doc => {
         const event = doc.data();
@@ -296,6 +296,9 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
       .then(([docRef, alreadyFulfilled, questions]) => {
         console.log(`Fulfilled question ${question} for event ${event_id}`);
         const eventFinished = questions === alreadyFulfilled.docs.length;
+        if (eventFinished) {
+          currentEventRef.set({ complete: true }, { merge: true });
+        }
         res.send({
           results: { [question]: fulfilled },
           howManyFulfilled: alreadyFulfilled.docs.length,
