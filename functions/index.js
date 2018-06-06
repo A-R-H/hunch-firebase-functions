@@ -251,8 +251,8 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { question, event_id, correct } = req.body;
     console.log("req.body: ", req.body);
-    const currentEventRef = db.collection("Current_Event").doc(event_id);
-    const tallyRef = db.collection("Event_Winners").doc(event_id);
+    const currentEventRef = db.collection("Current_Event").doc(`${event_id}`);
+    const tallyRef = db.collection("Event_Winners").doc(`${event_id}`);
     const fulfilled = { correct };
     return currentEventRef
       .get()
@@ -285,7 +285,10 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
         console.log(`Fulfilled question ${question} for event ${event_id}`);
         const howManyFulfilled = alreadyFulfilled.docs.length;
         const eventFinished = questions === howManyFulfilled;
-        const tallyData = oldTally.data();
+        let tallyData = oldTally.data();
+        if (!tallyData) {
+          tallyData = {};
+        }
         for (let user in answers) {
           if (answers[user] === correct) {
             tallyData[user] = tallyData[user] ? tallyData[user] + 1 : 1;
@@ -294,17 +297,19 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
         return Promise.all([
           tallyRef.set(tallyData),
           eventFinished,
-          howManyFulfilled
+          howManyFulfilled,
+          tallyData
         ]);
       })
-      .then(([docRef, eventFinished, howManyFulfilled]) => {
+      .then(([docRef, eventFinished, howManyFulfilled, tallyData]) => {
         if (eventFinished) {
           currentEventRef.set({ complete: true }, { merge: true });
         }
         res.send({
           results: { [question]: fulfilled },
           howManyFulfilled,
-          eventFinished
+          eventFinished,
+          tallyData
         });
       })
       .catch(err => {
@@ -455,6 +460,7 @@ exports.changeLiveStatus = functions.https.onRequest((req, res) => {
   });
 });
 
+// 15.
 exports.getWinnersTally = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     const { event } = req.query;
