@@ -274,6 +274,7 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
         const event = doc.data();
         const answers = event[`answers_for_Q${question}`];
         const answers_num = Number(event[question].answers_num);
+        const { questions } = event;
         fulfilled.answers_num = answers_num;
         const refArr = ["a", "b", "c"];
         for (let i = 0; i < answers_num; i++) {
@@ -282,14 +283,24 @@ exports.fulfillQuestion = functions.https.onRequest((req, res) => {
         for (let user in answers) {
           fulfilled[answers[user]].push(user);
         }
-        return db
-          .collection("Fulfilled_Questions")
-          .doc(question)
-          .set(fulfilled);
+
+        return Promise.all([
+          db
+            .collection("Fulfilled_Questions")
+            .doc(question)
+            .set(fulfilled),
+          db.collection("Fulfilled_Questions").get(),
+          questions
+        ]);
       })
-      .then(docRef => {
+      .then(([docRef, alreadyFulfilled, questions]) => {
         console.log(`Fulfilled question ${question} for event ${event_id}`);
-        res.send({ [question]: fulfilled });
+        const eventFinished = questions === alreadyFulfilled.docs.length;
+        res.send({
+          results: { [question]: fulfilled },
+          howManyFulfilled: alreadyFulfilled.docs.length,
+          eventFinished
+        });
       })
       .catch(err => {
         console.log(
