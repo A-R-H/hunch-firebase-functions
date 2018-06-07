@@ -480,7 +480,7 @@ exports.getWinnersTally = functions.https.onRequest((req, res) => {
               winners.push(user);
             }
           }
-          res.send({ winners, topMark });
+          res.send({ winners, topMark, allMarks: data });
         }
       })
       .catch(err => {
