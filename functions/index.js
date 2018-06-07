@@ -28,6 +28,7 @@ FUNCTIONS
 13. CurrentEventById
 14. changeLiveStatus
 15. getWinnersTally
+16. addUserToEvent
 
 */
 
@@ -473,12 +474,46 @@ exports.getWinnersTally = functions.https.onRequest((req, res) => {
           res.send({ err: "Invalid event id" });
         } else {
           console.log(`request for ${event} event data`);
-          res.send(doc.data());
+          const data = doc.data();
+          // const users = Object.keys(data);
+          const marks = Object.keys(data).map(user => {
+            return Number(data[user]);
+          });
+          const topMark = Math.max(...marks);
+          const winners = [];
+          for (let user in data) {
+            if (data[user] === topMark) {
+              winners.push(user);
+            }
+          }
+          res.send({ winners, topMark });
         }
       })
       .catch(err => {
         console.log(`Error getting document for event ${event}`, err);
         res.send(err);
+      });
+  });
+});
+
+// 16.
+exports.addUserToEvent = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    const { uid, event } = req.body;
+    const eventRef = db.collection("Current_Event").doc(`${event}`);
+    return db
+      .runTransaction(t => {
+        return t.get(eventRef).then(doc => {
+          const total_users = Number(doc.data().total_users) + 1;
+          return t.update(eventRef, { total_users });
+        });
+      })
+      .then(result => {
+        console.log("Transaction success", result);
+        res.send({ msg: "success" });
+      })
+      .catch(err => {
+        console.log("Transaction failure:", err);
       });
   });
 });
