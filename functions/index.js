@@ -29,6 +29,7 @@ FUNCTIONS
 14. changeLiveStatus
 15. getWinnersTally
 16. addUserToEvent
+17. startEvent
 
 */
 
@@ -400,7 +401,6 @@ exports.questionsToCurrentQuestions = functions.https.onRequest((req, res) => {
 // 13.
 exports.CurrentEventById = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
-    //req.body = JSON.parse(req.body);
     console.log(req.body);
     const { eventID } = req.body;
 
@@ -423,17 +423,11 @@ exports.CurrentEventById = functions.https.onRequest((req, res) => {
 // 14.
 exports.changeLiveStatus = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
-    //req.body = JSON.parse(req.body);
-    console.log("REQ", req.body);
     const { questionNo } = req.body;
-    console.log("QUESTION NO", questionNo);
-
     const questionRef = db.collection("Current_Questions").doc(`${questionNo}`);
-
     return questionRef
       .get()
       .then(doc => {
-        console.log("here");
         console.log("STATUS", doc.data());
         const question = doc.data();
         question["live"] = !question["live"];
@@ -514,6 +508,30 @@ exports.addUserToEvent = functions.https.onRequest((req, res) => {
       })
       .catch(err => {
         console.log("Transaction failure:", err);
+      });
+  });
+});
+
+// 17.
+exports.startEvent = functions.https.onRequest((req, res) => {
+  return cors(req, res, () => {
+    const { event } = req.query;
+    const eventRef = db.collection("Current_Event").doc(event);
+    let total_users;
+    return db
+      .runTransaction(t => {
+        return t.get(eventRef).then(doc => {
+          const start = true;
+          total_users = doc.data().total_users;
+          return t.update(eventRef, { start });
+        });
+      })
+      .then(result => {
+        console.log(`Event ${event} has started`, result);
+        res.send({ total_users });
+      })
+      .catch(err => {
+        console.log(`Event ${event} failed to start`, err);
       });
   });
 });
